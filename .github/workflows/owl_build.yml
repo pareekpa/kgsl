@@ -16,21 +16,9 @@ on:
         type: string
         required: true
 
-    outputs:
-      s3_location:
-        description: "S3 location of uploaded artifacts"
-        value: ${{ jobs.build.outputs.s3_location }}
-      kernel_version:
-        description: "Kernel version built"
-        value: ${{ jobs.build.outputs.kernel_version }}
-
 jobs:
   build:
-    runs-on:
-      group: GHA-Kernel-SelfHosted-RG
-      labels: [ self-hosted, kernel-prd-u2404-x64-large-od-ephem ]
     outputs:
-      s3_location: ${{ steps.upload-artifacts.outputs.s3_location }}
       kernel_version: ${{ steps.build_workspace.outputs.kernel_version }}
     steps:
       - name: Checkout code
@@ -77,7 +65,7 @@ jobs:
           touch $workspace/../artifacts/file_list.txt
           cd $workspace/../kobj/tar-install
           tar -cJf ${{ github.workspace }}/modules.tar.xz lib/modules/
-          
+
           echo "${{ github.workspace }}/modules.tar.xz" >> $workspace/../artifacts/file_list.txt
           echo "$workspace/../kobj/arch/arm64/boot/Image" >> $workspace/../artifacts/file_list.txt
           echo "$workspace/../kobj/vmlinux" >> $workspace/../artifacts/file_list.txt
