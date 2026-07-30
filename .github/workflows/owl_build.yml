@@ -1,0 +1,79 @@
+name: owl_build
+on:
+  workflow_dispatch:
+    inputs:
+      docker_image:
+        description: Docker image
+        type: string
+        required: false
+        default: ghcr.io/pareekpa/oot_kbuild
+      branch:
+        description: Branch name
+        type: string
+        required: false
+      repo:
+        description: Target repository
+        type: string
+        required: true
+
+jobs:
+  build:
+    runs-on:
+      ubuntu-latest
+    outputs:
+      kernel_version: ${{ steps.build_workspace.outputs.kernel_version }}
+    steps:
+      - name: Checkout kgsl code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: kgsl
+          ref: gfx-kernel.le.0.0
+
+      - name: Checkout kernel code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          path: kernel
+          repository: ${{ inputs.repo }}
+          ref: ${{ inputs.branch }}
+
+      - name: Dirs after code sync
+        run: |
+          echo "GITHUB_WORKSPACE=$GITHUB_WORKSPACE"
+          pwd
+          ls -al
+
+      - name: Login to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: pareekpa
+          password: ${{ secrets.OWL_PAT }}
+      - name: pull docker image
+        id: pull_docker_image
+        run: |
+          docker image pull ghcr.io/pareekpa/oot_kbuild
+          docker run ghcr.io/pareekpa/oot_kbuild
+
+      - name: Build workspace
+        id: build_workspace
+        run: |
+          pwd
+          ls -al
+          docker run -i --rm \
+          --user $(id -u):$(id -g) \
+          --workdir="$PWD" \
+          -v "$(dirname $PWD)":"$(dirname $PWD)" \
+          ${{ inputs.docker_image }} bash -c "
+            ls -al
+            pwd
+            make -C kernel defconfig
+            make -C kernel
+            make -C kgsl KERNEL_SRC=$(pwd)/kernel
+          "
+
+      - name: Clean up
+        run: |
+          rm -rf kgsl
+          rm -rf kernel
