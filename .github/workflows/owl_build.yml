@@ -72,8 +72,3 @@ jobs:
             make -C kernel
             make -C kgsl KERNEL_SRC=$(pwd)/kernel
           "
-
-      - name: Clean up
-        run: |
-          rm -rf kgsl
-          rm -rf kernel
