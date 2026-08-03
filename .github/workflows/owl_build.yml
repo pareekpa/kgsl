@@ -53,8 +53,8 @@ jobs:
       - name: pull docker image
         id: pull_docker_image
         run: |
-          docker image pull ghcr.io/pareekpa/oot_kbuild
-          docker run ghcr.io/pareekpa/oot_kbuild
+          docker image pull ${{ inputs.docker_image }}
+          docker run ${{ inputs.docker_image }}
 
       - name: Build workspace
         id: build_workspace
